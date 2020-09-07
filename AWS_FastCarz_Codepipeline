@@ -1,0 +1,105 @@
+SCENARIO 1:-
+
+As per the requirment and below setup, once the changes from development branch are merged to the master branch, Codepipeline is triggered as per the cloudwatch event. It downloads the code from our CodeCommit repository "FastCarz_Rental_Project" and build it as per the CodeBuild configurations. It will then create a CodeDeploy deployment to our Dev server i.e. artifcats are deployed to the Dev environment first. Once its deployed on Dev Server, a mail is sent to the team of approvers for approving the deployment to QA. Once approval is given, the codepipelines is triggered automatically and artifacts are deployed to the QA server.  Post this, again a mail is sent to the appovers for approving the prod deployment. Once the approval is given, the artifacts are then deployed to the Prod server automatically. After the execution of Codepipeline a mail notification is sent to the concerned teams.
+
+
+CodeCommit		 CodeBuild		CodeDeploy
+_________		 _______		________			________			 _________
+│		│		│		│		│		│ Approval  │       │  Approval  │        │
+│		│ -->   │		│ -->   │  DEV  │ ------->  │  QA   │  ------->  │  PROD  │
+│_______│       │_______│		│_______│			│_______│			 │________│
+
+
+
+For a automated CI/CD of the car rental company on AWS, we will be creating a Codepipeline. Below are the steps followed:
+
+1)CodeCommit:
+a) Create a CodeCommit repository named as "FastCarz_Rental_Project" (it has API, WEB and Test Projects).
+
+Here, we need to provide the repo name and description. Also, for setting up local repository, navigate to the local directory and clone the address of "FastCarz_Rental_Project" repo from the CodeCommit console like below:
+
+i) ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/FastCarz_Rental_Project   --> under C:\FastCarz_Rental_Project\
+
+
+
+2)CodeBuild:
+Create a CodeBuild project Named: Car_Project_Build
+a)   Add Source1 as FastCarz_Rental_Project repo from the CodeCommit.Provide below details:
+i)   Select Branch Name as Master
+ii)  Select Operating System 
+iii) Service Role (create a new role)
+iv)  Provide VPC,Compute and environemnt Details 
+v)   Use buildspec.yml file, that should be present in the source code root directory of FastCarz_Rental_Project repo.(Or Insert build commands directly in the Buildspec section). The file will build the .net solution and create the artifacts.
+vi)  Provide artifact storage location
+vii) Enable Cloudwatch Logging by providing already cretaed Log Group and Stream name (Need to create Couldwatch Log Group)
+viii)To stop the CodeBuild from execution in case test fails, we need to set CODEBUILD_BUILD_SUCCEEDING as '0' in Install phase of Buildspec.yml file. It will stop the execution and build is shown as failed.
+
+
+3)CodeDeploy:
+a)  Create a role 'CodeDeployRole' that has 'AmazonEC2RoleforAWSCodeDeploy', 'AWSCodeDeployRole', 'AWSCodePipelineFullAccessattached' to it.
+b)  Choose this IAM role in the EC2 instance named 'RentalApplication' directly.
+c)  Install CodeDeploy agent on the EC2 instances(DEV, QA, PROD) where the application will be deployed.
+d)  In Codedeploy, create a Application named CarApp_Deployment and select the Role, Compute platform(EC2: RentalApplication), Deployment type and configuration and Load Balancer. Add a appspec.yml file in the source code root directory of FastCarz_Rental_Project repo. This .yml file tells the codedeploy agent to pick particular files from the source and deploy them to the destination folder. 
+e)  Add Scripts to start/stop server or services etc. in the scripts folder and mention them in the Hooks section of the appspec.yml file.
+f)  Create 3 deployement groups named as below under CarApp_Deployment Application:
+i)  DevDeploy: It will deploy the artifacts to Dev Server  (Dev Server is selected wile creating the deployment group)
+ii) QADeploy:  It will deploy the artifacts to QA Server   (QA Server is selected wile creating the deployment group)
+iii)PRODDeploy:It will deploy the artifacts to PROD Server (PROD Server is selected wile creating the deployment group)
+
+4)CodePipeline:
+a) Create a pipeline named CarProjectPipeline, and select new servcie role, give the location for storing the deployable artifacts in S3 bucket named storeartifactbucket.
+b) Provide source provider as Codecommit and the repo name as FastCarz_Rental_Project. 
+c) Select CodeBuild project as Car_Project_Build and build type as Single build.
+d) Select CodeDeploy as provider and Application name as CarApp_Deployment and deployment group as DevDeploy (default).
+e) Once the pipeline is created. Add a stage named as QA and add below 2 action groups:
+i) QA Approval with provider as 'Manual Approval' (A SNS topic is cretaed and configured)
+ii)QA Deployment (once 'QA Approval' stage is completed, QA Deployment stage is triggered that deploys the Artifacts on QA server as configured in 'QADeploy' deployment group)
+f) Add other stage named as PROD and add below 2 action groups:
+i) PROD Approval with provider as 'Manual Approval' (A SNS topic is cretaed and configured)
+ii)PROD Deployment(once PROD Approval stage is completed, PROD Deployment stage is triggered that deploys the Artifacts on PROD server as configured in 'PRODDeploy' deployment group)
+
+
+5)Notification Rule:
+Notification rule is created to notify teh teams on the completion/failure/abortion of the CodePipeline. A SNS topic is selected with respect to the execution of the Codepiepline stages/Approvals and the mail is sent to the concerned teams. 
+
+
+The directory and file hierarchy can look like below:
+
+C:\
+   └-- FastCarz_Rental_Project
+       │-- appspec.yml
+	   │-- buildspec.yml
+	   │-- artifacts/
+	   │-- build/
+	   │-- docs/
+	   │-- lib/
+	   │-- packages/
+	   │-- samples/
+	   │-- src/
+	   │-- tests/
+	   │-- .editorconfig
+	   │-- .gitignore
+       │-- .gitattributes
+	   │-- build.cmd
+	   │-- build.sh
+	   │-- NuGet.Config
+	   │-- README.md
+	   │-- api.sln
+	   │-- web.sln
+	   │-- test.sln
+       │-- LICENSE.txt
+       └-- scripts
+           │-- install_dependencies
+           │-- start_server
+           └-- stop_server
+	   
+
+
+
+
+
+
+
+
+
+
