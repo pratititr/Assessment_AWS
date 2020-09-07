@@ -3,11 +3,11 @@ SCENARIO 1:-
 As per the requirment and below setup, once the changes from development branch are merged to the master branch, Codepipeline is triggered as per the cloudwatch event. It downloads the code from our CodeCommit repository "FastCarz_Rental_Project" and build it as per the CodeBuild configurations. It will then create a CodeDeploy deployment to our Dev server i.e. artifcats are deployed to the Dev environment first. Once its deployed on Dev Server, a mail is sent to the team of approvers for approving the deployment to QA. Once approval is given, the codepipelines is triggered automatically and artifacts are deployed to the QA server.  Post this, again a mail is sent to the appovers for approving the prod deployment. Once the approval is given, the artifacts are then deployed to the Prod server automatically. After the execution of Codepipeline a mail notification is sent to the concerned teams.
 
 
-CodeCommit		 CodeBuild		CodeDeploy
-_________		 _______		________			________			 _________
-│		│		│		│		│		│ Approval  │       │  Approval  │        │
-│		│ -->   │		│ -->   │  DEV  │ ------->  │  QA   │  ------->  │  PROD  │
-│_______│       │_______│		│_______│			│_______│			 │________│
+CodeCommit	  CodeBuild	   CodeDeploy
+_________	   _______	    ________		    ________		   _________
+│	│	  │  	  │	    │	    │	 Approval   │       │   Approval   │        │
+│	│  ---->  │       │  ---->  │  DEV  │    ------->   │   QA  │   ------->   │  PROD  │
+│_______│         │_______│	    │_______│	   	    │_______│		   │________│
 
 
 
