@@ -1,0 +1,42 @@
+Scenario2:
+
+For automated creation/deployment of AWS infra, we will be using integration of cloudformation Plugin and Jenkins.
+
+1) We need a JSON, YAML or .txt file for creation of Cloudformation tempelate. Also, we can directly create the stack on AWS Cloudformation console.
+
+
+2)For creation of cloudformation we need to have below :
+a) AWS account
+b) IAM User having role to perform/control actions on AWS resources.
+c) Service role for Cloudformation to make calls to the resources in a stack.
+d) A text editor to write AWS CloudFormation template (a JSON or YAML-formatted document) Or use AWS Cloudformation Designer
+e) S3 bucket in case of storing the created tempelate or store it locally.
+
+
+3) For deployment of Cloudformation stack, we can use jenkins. We need to install 'jenkins-cloudformation-plugin' in jenkins. In Jenkins 'Build Environment' we need to select 'Create AWS Cloudformation Stack' and provide below stack configurations:
+a) AWS region
+b) CloudFormation recipe file (JSON)
+c) Stack Name
+d) Stack Description
+e) CloudFormation Parametets 
+f) Timeout
+g) AWS Access Key
+h) AWS Secret Key
+
+Here, The plugin will allow us to create the CloudFormation stack before running the build and the deletion of them after the build is completed i.e.  it will spawn AWs Cloud Formation stacks before running the build and stopping it at the end.
+
+In Jenkins 'Post Build' actions, we can select 'Tear down  Amazon CloudFormation' and provide below configurations. This will allow the job to kill the stack that was created in previous job.
+a) AWS region
+b) Stack Name
+c) AWS Access Key
+d) AWS Secret Key
+
+
+
+4)A sample cloudformation tempelate is attached here, deploying which, a t2.micro EC2 instance is created. 
+  File Name: ec2instance.json
+
+5)To access the newly created/existing key-pair in Cloudformation for Ec2 instance, we have to provide the valid value in 'KeyName' box while creating the stack. Also, both key-pair and stack should be in same region.
+
+
+
